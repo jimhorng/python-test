@@ -12,25 +12,27 @@ import random
 
 # Configurations
 SEND_INTERNAL=0.01
-# TOKEN_HEX = '76d1f75c4249efe0cf14af70acef799fd783e561c88e3ca6839f07c913ef646f' #ipad test app
+TOKEN_HEX = '76d1f75c4249efe0cf14af70acef799fd783e561c88e3ca6839f07c913ef646f' #ipad test app
 # TOKEN_HEX = '2d5ba485e86cddfd5e9577f1de0b701708792f73b1324eb4960c6e7e963d1675' #Hades
-TOKEN_HEX = '9094df9641afb864c4145a61b10e1777ca141bab3d72d75eb78354211c5f8a9f' #Alpha qmanager
+# TOKEN_HEX = '9094df9641afb864c4145a61b10e1777ca141bab3d72d75eb78354211c5f8a9f' #Alpha qmanager
 
 TOKEN_HEX_BAD = '123457894249efe0cf14af70acef799fd783e561c88e3ca6839f07c913ef6412'
 
-# CERT_FILE = 'apns_qnap_dev.pem'
+CERT_FILE = 'apns_qnap_dev.pem'
 # CERT_FILE = 'apns_enterprise_dist.pem'
 # CERT_FILE = 'apns_bad.pem'
-CERT_FILE = 'Qmanager_Enterprise_Distribution.pem'
+# CERT_FILE = 'Qmanager_Enterprise_Distribution.pem'
 
-USE_SANDBOX=False
+USE_SANDBOX=True
 
 _logger = logging.getLogger()
 stream_handler = logging.StreamHandler(stream=sys.stdout)
+file_handler = logging.FileHandler(filename='apns_test.log')
 formatter = logging.Formatter('[%(asctime)s][%(process)s][%(threadName)s][%(pathname)s:%(lineno)d][%(levelname)s] %(message)s','%m-%d %H:%M:%S')
 stream_handler.setFormatter(formatter)
+file_handler.setFormatter(formatter)
 _logger.addHandler(stream_handler)
-_logger.addHandler(logging.FileHandler(filename='log'))
+_logger.addHandler(file_handler)
 _logger.setLevel(logging.DEBUG)
 
 apns = APNs(use_sandbox=USE_SANDBOX, cert_file=CERT_FILE, enhanced=True)
@@ -64,18 +66,19 @@ def wait_till_error_response_unchanged():
         return delay * count
     return 0
 
-def process(token, qty):
+def process(token, qty, send_interval=0):
     payload = payload123.copy()
     base_alert = payload123['aps']['alert']
+    apns.gateway_server.register_response_listener(response_listener)
     for i in range(1, qty+1):
         payload['aps']['alert'] = base_alert + str(i)
 #         identifier = random.getrandbits(32)
-        identifier = i
-        time.sleep(SEND_INTERNAL)
-        apns.gateway_server.register_response_listener(response_listener)
+        identifier = i        
         apns.gateway_server.send_notification(token, Payload(custom=payload), identifier=identifier)
         _logger.info("client sent to: " + str(identifier))
+        time.sleep(send_interval)
     
+    _logger.debug("getting msg from feedback server...")
     for (token, failed_time) in apns.feedback_server.items():
         _logger.debug("failed: " + str(token) + "\tmsg: " + str(failed_time))
 
@@ -110,11 +113,11 @@ def test_normal_fail():
     apns_response = apns.gateway_server.send_notification(TOKEN_HEX, Payload(custom=payload), identifier=identifier)
     print "sent test_normal to: ", identifier, "\tresponse: ", apns_response
     
-def test_normal(qty=1):
-    process(TOKEN_HEX, qty=qty)
+def test_normal(qty=1, send_interval=0):
+    process(TOKEN_HEX, qty=qty, send_interval=send_interval)
 
-def test_fail(qty):
-    process(TOKEN_HEX_BAD, qty=qty)
+def test_fail(qty=1, send_interval=0):
+    process(TOKEN_HEX_BAD, qty=qty, send_interval=send_interval)
 
 def test_fail_nonenhance(qty):
     global apns
@@ -126,9 +129,9 @@ def test_normal_nonenhance(qty):
     apns = APNs(use_sandbox=True, cert_file=CERT_FILE)
     process(TOKEN_HEX, qty=qty)
 
-def test_send_interval():
+def test_send_interval(send_interval=0):
     for _ in xrange(100):
-        test_normal(5)
+        test_normal(5, send_interval)
         time.sleep(10)
 
 def test_send_by_signal():
@@ -145,14 +148,14 @@ def sig_handler_for_test_normal(signum, frame):
     test_normal(2)
 
 def test_runner():
-#     test_normal(1)
+#     test_normal(10, 40)
 #     test_normal_fail()
-#     test_fail(10)
+    test_fail(1000)
 #     test_fail_nonenhance(100)
 #     test_normal_nonenhance(100)
 #     test_random_identifier(1000)
 #     test_send_interval()
-    test_send_by_signal()
+#     test_send_by_signal()
 
 def main():
 #     time_start = time.time()
