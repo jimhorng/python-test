@@ -66,11 +66,11 @@ def wait_till_error_response_unchanged():
         return delay * count
     return 0
 
-def process(token, qty, send_interval=0):
+def process(token, qty, send_interval=0, start_idx=1):
     payload = payload123.copy()
     base_alert = payload123['aps']['alert']
     apns.gateway_server.register_response_listener(response_listener)
-    for i in range(1, qty+1):
+    for i in range(start_idx, start_idx+qty):
         payload['aps']['alert'] = base_alert + str(i)
 #         identifier = random.getrandbits(32)
         identifier = i        
@@ -90,34 +90,17 @@ def test_random_identifier(qty):
         print "sent to ", identifier
 
 def test_normal_fail():
-    payload = payload123.copy()
-    identifier = 1
-    alert_content = payload['aps']['alert']
-    payload['aps']['alert'] = alert_content + str(identifier)
-    apns_response = apns.gateway_server.send_notification(TOKEN_HEX, Payload(custom=payload), identifier=identifier)
-    print "sent test_normal to: ", identifier, "\tresponse: ", apns_response
-    identifier += 1
-    payload['aps']['alert'] = alert_content + str(identifier)
-    apns_response = apns.gateway_server.send_notification(TOKEN_HEX, Payload(custom=payload), identifier=identifier)
-    print "sent test_normal to: ", identifier, "\tresponse: ", apns_response
-    identifier += 1
-    payload['aps']['alert'] = alert_content + str(identifier)
-    apns_response = apns.gateway_server.send_notification(TOKEN_HEX_BAD, Payload(custom=payload), identifier=identifier)
-    print "sent test_fail to: ", identifier, "\tresponse: ", apns_response
-    identifier += 1
-    payload['aps']['alert'] = alert_content + str(identifier)
-    apns_response = apns.gateway_server.send_notification(TOKEN_HEX, Payload(custom=payload), identifier=identifier)
-    print "sent test_normal to: ", identifier, "\tresponse: ", apns_response
-    identifier += 1
-    payload['aps']['alert'] = alert_content + str(identifier)
-    apns_response = apns.gateway_server.send_notification(TOKEN_HEX, Payload(custom=payload), identifier=identifier)
-    print "sent test_normal to: ", identifier, "\tresponse: ", apns_response
+    test_normal(qty=100, start_idx=1)
+    test_fail(qty=1, start_idx=101)
+    test_normal(qty=100, start_idx=102)
+    test_fail(qty=2, start_idx=202)
+    test_normal(qty=100, start_idx=204)
     
-def test_normal(qty=1, send_interval=0):
-    process(TOKEN_HEX, qty=qty, send_interval=send_interval)
+def test_normal(qty=1, send_interval=0, start_idx=1):
+    process(TOKEN_HEX, qty=qty, send_interval=send_interval, start_idx=start_idx)
 
-def test_fail(qty=1, send_interval=0):
-    process(TOKEN_HEX_BAD, qty=qty, send_interval=send_interval)
+def test_fail(qty=1, send_interval=0, start_idx=1):
+    process(TOKEN_HEX_BAD, qty=qty, send_interval=send_interval, start_idx=start_idx)
 
 def test_fail_nonenhance(qty):
     global apns
@@ -131,8 +114,14 @@ def test_normal_nonenhance(qty):
 
 def test_send_interval(send_interval=0):
     for _ in xrange(100):
+        
+        _check_netstat()
+
         test_normal(5, send_interval)
-        time.sleep(10)
+        
+        _check_netstat()
+        
+        time.sleep(60 * 130)
 
 def test_send_by_signal():
     import signal
@@ -147,14 +136,23 @@ def sig_handler_for_test_normal(signum, frame):
     _logger.debug("trackback:%s" % traceback.format_stack(frame))
     test_normal(2)
 
+def _check_netstat():
+    import subprocess
+    cmd = """netstat -ant | grep 2195"""
+    try:
+        output = subprocess.check_output(cmd, shell=True)
+    except Exception as e:
+        output = str(e)
+    _logger.debug("socket status: %s" % output)
+
 def test_runner():
-#     test_normal(10, 40)
+    test_normal(1, 3)
 #     test_normal_fail()
-    test_fail(1000)
+#     test_fail(1000)
 #     test_fail_nonenhance(100)
 #     test_normal_nonenhance(100)
 #     test_random_identifier(1000)
-#     test_send_interval()
+    # test_send_interval()
 #     test_send_by_signal()
 
 def main():
@@ -162,10 +160,10 @@ def main():
     
     test_runner()
     
-    time.sleep(60)
+    time.sleep(5)
     
 #     delay = wait_till_error_response_unchanged()
-    apns.gateway_server.close_read_thread()
+    apns.gateway_server.force_close()
 #     time_end = time.time()
 #     _logger.info("time elapsed: " + str(time_end - time_start - delay))
     
