@@ -1,0 +1,29 @@
+[2014-02-25 16:17:00,896: ERROR/MainProcess] Error on stopping Pool: AttributeError("'NoneType' object has no attribute 'unregister'",)
+Traceback (most recent call last):
+  File "/Users/jimhorng/workspace/virtualenvs/apienv/lib/python2.7/site-packages/celery/bootsteps.py", line 155, in send_all
+    fun(parent, *args)
+  File "/Users/jimhorng/workspace/virtualenvs/apienv/lib/python2.7/site-packages/celery/bootsteps.py", line 377, in stop
+    return self.obj.stop()
+  File "/Users/jimhorng/workspace/virtualenvs/apienv/lib/python2.7/site-packages/celery/concurrency/base.py", line 119, in stop
+    self.on_stop()
+  File "/Users/jimhorng/workspace/virtualenvs/apienv/lib/python2.7/site-packages/celery/concurrency/prefork.py", line 140, in on_stop
+    self._pool.join()
+  File "/Users/jimhorng/workspace/virtualenvs/apienv/lib/python2.7/site-packages/billiard/pool.py", line 1523, in join
+    stop_if_not_current(self._result_handler)
+  File "/Users/jimhorng/workspace/virtualenvs/apienv/lib/python2.7/site-packages/billiard/pool.py", line 148, in stop_if_not_current
+    thread.stop(timeout)
+  File "/Users/jimhorng/workspace/virtualenvs/apienv/lib/python2.7/site-packages/billiard/pool.py", line 493, in stop
+    self.on_stop_not_started()
+  File "/Users/jimhorng/workspace/virtualenvs/apienv/lib/python2.7/site-packages/celery/concurrency/asynpool.py", line 301, in on_stop_not_started
+    join_exited_workers(shutdown=True)
+  File "/Users/jimhorng/workspace/virtualenvs/apienv/lib/python2.7/site-packages/billiard/pool.py", line 1147, in _join_exited_workers
+    self.on_process_down(worker)
+  File "/Users/jimhorng/workspace/virtualenvs/apienv/lib/python2.7/site-packages/celery/concurrency/asynpool.py", line 565, in on_process_down
+    _remove_from_index(proc.outq._reader, proc, fileno_to_outq)
+  File "/Users/jimhorng/workspace/virtualenvs/apienv/lib/python2.7/site-packages/celery/concurrency/asynpool.py", line 555, in _remove_from_index
+    hub_remove(fd)
+  File "/Users/jimhorng/workspace/virtualenvs/apienv/lib/python2.7/site-packages/kombu/async/hub.py", line 180, in remove
+    self._unregister(fd)
+  File "/Users/jimhorng/workspace/virtualenvs/apienv/lib/python2.7/site-packages/kombu/async/hub.py", line 244, in _unregister
+    self.poller.unregister(fd)
+AttributeError: 'NoneType' object has no attribute 'unregister'

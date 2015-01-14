@@ -11,17 +11,20 @@ import sys
 import random
 
 # Configurations
-SEND_INTERNAL=0.01
 TOKEN_HEX = '76d1f75c4249efe0cf14af70acef799fd783e561c88e3ca6839f07c913ef646f' #ipad test app
 # TOKEN_HEX = '2d5ba485e86cddfd5e9577f1de0b701708792f73b1324eb4960c6e7e963d1675' #Hades
 # TOKEN_HEX = '9094df9641afb864c4145a61b10e1777ca141bab3d72d75eb78354211c5f8a9f' #Alpha qmanager
 
 TOKEN_HEX_BAD = '123457894249efe0cf14af70acef799fd783e561c88e3ca6839f07c913ef6412'
+TOKEN_HEX_BAD_2 = '123'
+TOKEN_HEX_BAD_3 = '1234'
+TOKEN_HEX_BAD_4 = '!!!!'
 
 CERT_FILE = 'apns_qnap_dev.pem'
 # CERT_FILE = 'apns_enterprise_dist.pem'
 # CERT_FILE = 'apns_bad.pem'
 # CERT_FILE = 'Qmanager_Enterprise_Distribution.pem'
+# CERT_FILE = 'Vmobile.dev.pem'
 
 USE_SANDBOX=True
 
@@ -76,11 +79,12 @@ def process(token, qty, send_interval=0, start_idx=1):
         identifier = i        
         apns.gateway_server.send_notification(token, Payload(custom=payload), identifier=identifier)
         _logger.info("client sent to: " + str(identifier))
+        
+        _logger.debug("getting msg from feedback server...")
+        for (token, failed_time) in apns.feedback_server.items():
+            _logger.debug("failed: " + str(token) + "\tmsg: " + str(failed_time))
+        
         time.sleep(send_interval)
-    
-    _logger.debug("getting msg from feedback server...")
-    for (token, failed_time) in apns.feedback_server.items():
-        _logger.debug("failed: " + str(token) + "\tmsg: " + str(failed_time))
 
 def test_random_identifier(qty):
     payload = payload123.copy()
@@ -146,13 +150,17 @@ def _check_netstat():
     _logger.debug("socket status: %s" % output)
 
 def test_runner():
-    test_normal(1, 3)
+    test_normal(3, 1)
+#     process(TOKEN_HEX_BAD_4, qty=1, send_interval=0, start_idx=1)
+#     test_normal(1000, 0)
 #     test_normal_fail()
-#     test_fail(1000)
+#     test_fail(1000, 0)  # fast fail
+#     test_fail(10, 1)  # slow fail
+#     test_fail(3, 40)  # fail after idle timeout
 #     test_fail_nonenhance(100)
 #     test_normal_nonenhance(100)
 #     test_random_identifier(1000)
-    # test_send_interval()
+#     test_send_interval()
 #     test_send_by_signal()
 
 def main():
@@ -163,7 +171,7 @@ def main():
     time.sleep(5)
     
 #     delay = wait_till_error_response_unchanged()
-    apns.gateway_server.force_close()
+#     apns.gateway_server.force_close()
 #     time_end = time.time()
 #     _logger.info("time elapsed: " + str(time_end - time_start - delay))
     

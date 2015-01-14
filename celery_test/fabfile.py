@@ -82,14 +82,14 @@ def sender():
 @runs_once
 def worker():
     execute(init)
-    msg_qty = mq_consume_timer.get_message_qty_from_default_queue()
-    print "msg before: ", msg_qty
+    MSG_QTY = mq_consume_timer.get_message_qty_from_default_queue()
+    print "msg before: ", MSG_QTY
     execute(worker_start)
     time = mq_consume_timer.wait_and_get_msg_consuming_time()
     execute(worker_stop)
     print json.dumps({'worker_total_rate' : int(TOTAL_MSG / time),
-                      'msg_delta_rate' : int(msg_qty / time),
-                      'msg_delta' : msg_qty,
+                      'msg_delta_rate' : int(MSG_QTY / time),
+                      'msg_delta' : MSG_QTY,
                       'time_elapsed' : time})
 
 def combine_result(results):
@@ -97,7 +97,6 @@ def combine_result(results):
     combined_result['rate_total'] = 0
     combined_result['sent_total'] = 0
     for _, result in results.items():
-#         print "result in iter: ", result
         combined_result['rate_total'] += int(json.loads(result)['rate'])
         combined_result['sent_total'] += int(json.loads(result)['sent'])
     return combined_result

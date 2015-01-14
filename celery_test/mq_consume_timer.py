@@ -14,11 +14,11 @@ def main():
     print json.dumps({'elapsed_time' : wait_and_get_msg_consuming_time()})
 
 def wait_and_get_msg_consuming_time():
-    msg_qty = 1
+    MSG_QTY = 1
     time_start = time.time()
-    while(msg_qty != 0):
+    while(MSG_QTY != 0):
         time.sleep(1)
-        msg_qty = get_message_qty_from_default_queue()
+        MSG_QTY = get_message_qty_from_default_queue()
     time_end = time.time()
     return int(time_end- time_start)
 
