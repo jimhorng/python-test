@@ -4,9 +4,10 @@ Created on Dec 4, 2014
 @author: jimhorng
 '''
 
-def test1():
-    return (1, 2)
+def aaa():
+    import datetime
+    print "hello aaa"
 
-(a, b) = test1()
-print a
-print b
+if __name__ == '__main__':
+    aaa()
+    datetime.datetime
